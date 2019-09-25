@@ -54,7 +54,6 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         Button btnLoad = findViewById(R.id.btnLoad);
         btnLoad.setOnClickListener((v)->onClick());
-
     }
 
     private boolean checkInternet() {
@@ -76,7 +75,9 @@ public class MainActivity extends AppCompatActivity {
 
     private void downloadOneUrl(String request) {
 
-        api.getUser(request).subscribe(new SingleSubscriber<RetrofitModel>() {
+        api.getUser(request)
+                .subscribeOn(Schedulers.io())
+                .subscribe(new SingleSubscriber<RetrofitModel>() {
             @Override
             public void onSuccess(RetrofitModel value) {
                 mInfoTextView.setText(value.getUrl());
@@ -92,8 +93,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         api.getUserRepos(request)
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
                 .subscribe(new SingleSubscriber<List<RepositoryModel>>() {
             @Override
             public void onSuccess(List<RepositoryModel> value) {
