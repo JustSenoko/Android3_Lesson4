@@ -78,7 +78,7 @@
                 <TextView
                     android:id="@+id/sugar_result"
                     android:layout_width="match_parent"
-                    android:layout_height="45dp" />
+                    android:layout_height="55dp" />
             </LinearLayout>
 
             <LinearLayout
@@ -114,7 +114,7 @@
                 <TextView
                     android:id="@+id/room_result"
                     android:layout_width="match_parent"
-                    android:layout_height="45dp" />
+                    android:layout_height="55dp" />
             </LinearLayout>
 
         </LinearLayout>

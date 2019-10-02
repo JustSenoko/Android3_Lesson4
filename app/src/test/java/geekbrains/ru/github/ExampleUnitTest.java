@@ -1,4 +1,4 @@
-package geekbrains.ru.lesson4retrofit;
+package geekbrains.ru.github;
 
 import org.junit.Test;
 

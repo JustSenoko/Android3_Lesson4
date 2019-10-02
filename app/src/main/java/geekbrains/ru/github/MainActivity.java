@@ -1,4 +1,4 @@
-package geekbrains.ru.lesson4retrofit;
+package geekbrains.ru.github;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -19,9 +19,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import geekbrains.ru.lesson4retrofit.models.RepositoryModel;
-import geekbrains.ru.lesson4retrofit.models.RetrofitModel;
-import geekbrains.ru.lesson4retrofit.models.SugarModel;
+import geekbrains.ru.github.models.SugarModel;
+import geekbrains.ru.github.models.retrofit.RepositoryModel;
+import geekbrains.ru.github.models.retrofit.RetrofitModel;
+import geekbrains.ru.github.models.room.RoomModel;
 import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.SingleOnSubscribe;
@@ -41,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private TextView mRoomTextView;
     private TextView mReposTextView;
     private EditText editText;
+    private List<Statistics> roomStatistics = new ArrayList<>();
+    private List<Statistics> sugarStatistics = new ArrayList<>();
 
     List<RetrofitModel> modelList = new ArrayList<>();
 
@@ -57,18 +60,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     class Statistics {
-        private Long time;
-        private Integer recordsCount;
+        Long time;
+        Integer recordsCount;
 
         Statistics(Date start, Date finish, Integer recordsCount) {
             this.time = finish.getTime() - start.getTime();
             this.recordsCount = recordsCount;
         }
+    }
 
-        @SuppressLint("DefaultLocale")
-        String getResult() {
-            return String.format("количество = %d\nмилисекунд = %d", recordsCount, time);
+    @SuppressLint("DefaultLocale")
+    String getResult(List<Statistics> statisticsList) {
+        if (statisticsList.size() == 0) {
+            return "";
         }
+        Statistics lastEntry = statisticsList.get(statisticsList.size() - 1);
+        return String.format("количество = %d\nмилисекунд = %d\nсреднее = %d",
+                lastEntry.recordsCount, lastEntry.time, getTimeAvg(statisticsList));
+    }
+
+    private Long getTimeAvg(List<Statistics> statisticsList) {
+        int size = statisticsList.size();
+        if (size == 0) {
+            return 0L;
+        }
+        Long sum = 0L;
+        for (int i = 0; i < size; i++) {
+            sum += statisticsList.get(i).time;
+        }
+        return sum/ size;
     }
 
     RestApi api = retrofit.create(RestApi.class);
@@ -105,62 +125,87 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void deleteAllRoom() {
+        Single<Statistics> singleDeleteAllRoom = Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+            try {
+                List<RoomModel> products = OrmApp.get().getDB().productDao().getAll();
+                Date first = new Date();
+                OrmApp.get().getDB().productDao().deleteAll();
 
+                emitter.onSuccess(new Statistics(first, new Date(), products.size()));
+            } catch (Exception e) {
+                emitter.onError(e);
+            }
+        }).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+        singleDeleteAllRoom.subscribeWith(CreateObserver("room"));
     }
 
     private void selectAllRoom() {
-
+        Single<Statistics> singleSelectAllRoom = Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+            try {
+                Date first = new Date();
+                List<RoomModel> products = OrmApp.get().getDB().productDao().getAll();
+                emitter.onSuccess(new Statistics(first, new Date(), products.size()));
+            } catch (Exception e) {
+                emitter.onError(e);
+            }
+        }).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+        singleSelectAllRoom.subscribeWith(CreateObserver("room"));
     }
 
     private void saveAllRoom() {
-        /*io.reactivex.Single<Bundle> singleSaveAllRoom = io.reactivex.Single.create(new SingleOnSubscribe<Bundle>() {
-            @Override
-            public void subscribe(@NonNull SingleEmitter<Bundle> emitter) throws Exception {
-                String curLogin = "";
-                String curUserID = "";
-                String curAvatarUrl = "";
-                Date first = new Date();
-                List<RoomModel> roomModelList = new ArrayList<>();
-                for (RetrofitModel curItem : modelList) {
-                    RoomModel roomModel = new RoomModel();
-                    curLogin = curItem.getLogin();
-                    curUserID = curItem.getId();
-                    curAvatarUrl = curItem.getAvatarUrl();
-                    roomModel.setLogin(curLogin);
-                    roomModel.setAvatarUrl(curAvatarUrl);
-                    roomModel.setUserId(curUserID);
-                    roomModelList.add(roomModel);
-
-                    OrmApp.get().getDB().productDao().insertAll(roomModelList);
-                }
-                Date second = new Date();
-                Bundle bundle = new Bundle();
-                List<RoomModel> tempList = OrmApp.get().getDB().productDao().getAll();
-                bundle.putInt("count", tempList.size());
-                bundle.putLong("msek", second.getTime() - first.getTime());
-                emitter.onSuccess(bundle);
+        Single<Statistics> singleSaveAllRoom = Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+            String curLogin;
+            String curUserID;
+            String curAvatarUrl;
+            Date first = new Date();
+            List<RoomModel> roomModelList = new ArrayList<>();
+            for (RetrofitModel curItem : modelList) {
+                RoomModel roomModel = new RoomModel();
+                curLogin = curItem.getLogin();
+                curUserID = curItem.getId();
+                curAvatarUrl = curItem.getAvatarUrl();
+                roomModel.setLogin(curLogin);
+                roomModel.setAvatarUrl(curAvatarUrl);
+                roomModel.setUserId(curUserID);
+                roomModelList.add(roomModel);
             }
+            OrmApp.get().getDB().productDao().insertAll(roomModelList);
+            Date second = new Date();
+            List<RoomModel> tempList = OrmApp.get().getDB().productDao().getAll();
+            emitter.onSuccess(new Statistics(first, second, tempList.size()));
         }).subscribeOn(io.reactivex.schedulers.Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
-        singleSaveAllRoom.subscribeWith(CreateObserverSugar());*/
+        singleSaveAllRoom.subscribeWith(CreateObserver("room"));
     }
 
-    private DisposableSingleObserver<Statistics> CreateObserverSugar() {
+    private DisposableSingleObserver<Statistics> CreateObserver(String dbName) {
+        TextView textView;
+        List<Statistics> stat;
+        if (dbName.equals("sugar")) {
+            textView = mSugarTextView;
+            stat = sugarStatistics;
+        } else {
+            textView = mRoomTextView;
+            stat = roomStatistics;
+        }
         return new DisposableSingleObserver<Statistics>() {
             @Override
             protected void onStart() {
                 super.onStart();
-                mSugarTextView.setText("");
+                textView.setText("");
             }
 
             @Override
             public void onSuccess(@NonNull Statistics s) {
-                mSugarTextView.setText(s.getResult());
+                stat.add(s);
+                textView.setText(getResult(stat));
             }
 
             @Override
             public void onError(@NonNull Throwable e) {
-                mSugarTextView.setText(String.format("%s%s", getResources().getString(R.string.error), e.getMessage()));
+                textView.setText(String.format("%s%s", getResources().getString(R.string.error), e.getMessage()));
             }
         };
     }
@@ -179,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).subscribeOn(io.reactivex.schedulers.Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
-        singleDeleteAll.subscribeWith(CreateObserverSugar());
+        singleDeleteAll.subscribeWith(CreateObserver("sugar"));
     }
 
     private void selectAllSugar() {
@@ -194,7 +239,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).subscribeOn(io.reactivex.schedulers.Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
-        singleSelectAll.subscribeWith(CreateObserverSugar());
+        singleSelectAll.subscribeWith(CreateObserver("sugar"));
     }
 
     private void saveAllSugar() {
@@ -219,7 +264,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }).subscribeOn(io.reactivex.schedulers.Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
-        singleSaveAll.subscribeWith(CreateObserverSugar());
+        singleSaveAll.subscribeWith(CreateObserver("sugar"));
     }
 
     @Override

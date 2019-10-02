@@ -1,4 +1,4 @@
-package geekbrains.ru.lesson4retrofit.models;
+package geekbrains.ru.github.models;
 
 import com.orm.SugarRecord;
 
