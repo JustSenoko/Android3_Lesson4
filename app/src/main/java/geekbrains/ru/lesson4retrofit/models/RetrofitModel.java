@@ -1,4 +1,4 @@
-package geekbrains.ru.lesson4retrofit;
+package geekbrains.ru.lesson4retrofit.models;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -8,7 +8,7 @@ public class RetrofitModel {
     @Expose
     private String login;
     @Expose
-    private Integer id;
+    private String id;
     @SerializedName("avatar_url")
     @Expose
     private String avatarUrl;
@@ -23,11 +23,11 @@ public class RetrofitModel {
         this.login = login;
     }
 
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(String id) {
         this.id = id;
     }
 

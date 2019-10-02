@@ -31,11 +31,92 @@
             android:id="@+id/repo_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Репозитории" />
+            android:text="Репозитории"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvRepos"
             android:layout_width="match_parent"
             android:layout_height="150dp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:layout_weight="1"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="SugarORM"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnSaveAllSugar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Сохранить в БД" />
+
+                <Button
+                    android:id="@+id/btnSelectAllSugar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Показать все" />
+
+                <Button
+                    android:id="@+id/btnDeleteAllSugar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Удалить все" />
+
+                <TextView
+                    android:id="@+id/sugar_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="16dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Room"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnSaveAllRoom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Сохранить в БД" />
+
+                <Button
+                    android:id="@+id/btnSelectAllRoom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Показать все" />
+
+                <Button
+                    android:id="@+id/btnDeleteAllRoom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Удалить все" />
+
+                <TextView
+                    android:id="@+id/room_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="45dp" />
+            </LinearLayout>
+
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>
