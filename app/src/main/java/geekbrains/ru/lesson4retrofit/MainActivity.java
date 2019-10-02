@@ -12,6 +12,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import com.orm.SugarContext;
 
 import java.util.ArrayList;
@@ -21,18 +22,18 @@ import java.util.List;
 import geekbrains.ru.lesson4retrofit.models.RepositoryModel;
 import geekbrains.ru.lesson4retrofit.models.RetrofitModel;
 import geekbrains.ru.lesson4retrofit.models.SugarModel;
+import io.reactivex.Single;
+import io.reactivex.SingleObserver;
 import io.reactivex.SingleOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.http.GET;
 import retrofit2.http.Path;
-import rx.Single;
-import rx.SingleSubscriber;
-import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
     private TextView mInfoTextView;
@@ -40,20 +41,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView mRoomTextView;
     private TextView mReposTextView;
     private EditText editText;
-    private Button btnSaveAllRoom;
-    private Button btnSelectAllRoom;
-    private Button btnDeleteAllRoom;
-    private Button btnSaveAllSugar;
-    private Button btnSelectAllSugar;
-    private Button btnDeleteAllSugar;
 
     List<RetrofitModel> modelList = new ArrayList<>();
 
     private Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.github.com/")
-            .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(GsonConverterFactory.create()).build();
 
-    public interface RestApi{
+    public interface RestApi {
         @GET("users/{path}")
         Single<RetrofitModel> getUser(@Path("path") String user);
 
@@ -72,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
 
         @SuppressLint("DefaultLocale")
         String getResult() {
-            return String.format("количество = %d\n милисекунд = %d", recordsCount, time);
+            return String.format("количество = %d\nмилисекунд = %d", recordsCount, time);
         }
     }
 
@@ -92,15 +87,15 @@ public class MainActivity extends AppCompatActivity {
         mSugarTextView = findViewById(R.id.sugar_result);
         mRoomTextView = findViewById(R.id.room_result);
         mReposTextView = findViewById(R.id.tvRepos);
-        btnSaveAllSugar = findViewById(R.id.btnSaveAllSugar);
-        btnSelectAllSugar = findViewById(R.id.btnSelectAllSugar);
-        btnDeleteAllSugar = findViewById(R.id.btnDeleteAllSugar);
-        btnSaveAllRoom = findViewById(R.id.btnSaveAllRoom);
-        btnSelectAllRoom = findViewById(R.id.btnSelectAllRoom);
-        btnDeleteAllRoom = findViewById(R.id.btnDeleteAllRoom);
+        Button btnSaveAllSugar = findViewById(R.id.btnSaveAllSugar);
+        Button btnSelectAllSugar = findViewById(R.id.btnSelectAllSugar);
+        Button btnDeleteAllSugar = findViewById(R.id.btnDeleteAllSugar);
+        Button btnSaveAllRoom = findViewById(R.id.btnSaveAllRoom);
+        Button btnSelectAllRoom = findViewById(R.id.btnSelectAllRoom);
+        Button btnDeleteAllRoom = findViewById(R.id.btnDeleteAllRoom);
 
         Button btnLoad = findViewById(R.id.btnLoad);
-        btnLoad.setOnClickListener((v)-> loadUserInfoOnClick());
+        btnLoad.setOnClickListener((v) -> loadUserInfoOnClick());
         btnSaveAllSugar.setOnClickListener(view -> saveAllSugar());
         btnSelectAllSugar.setOnClickListener(view -> selectAllSugar());
         btnDeleteAllSugar.setOnClickListener(view -> deleteAllSugar());
@@ -157,17 +152,20 @@ public class MainActivity extends AppCompatActivity {
                 super.onStart();
                 mSugarTextView.setText("");
             }
+
             @Override
             public void onSuccess(@NonNull Statistics s) {
                 mSugarTextView.setText(s.getResult());
             }
+
             @Override
             public void onError(@NonNull Throwable e) {
-                mSugarTextView.setText("ошибка БД: " + e.getMessage());
+                mSugarTextView.setText(String.format("%s%s", getResources().getString(R.string.error), e.getMessage()));
             }
         };
     }
 
+    @SuppressLint("CheckResult")
     private void deleteAllSugar() {
         io.reactivex.Single<Statistics> singleDeleteAll = io.reactivex.Single.create((SingleOnSubscribe<Statistics>) emitter -> {
             try {
@@ -200,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void saveAllSugar() {
-        io.reactivex.Single<Statistics> singleSaveAll = io.reactivex.Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+        Single<Statistics> singleSaveAll = Single.create((SingleOnSubscribe<Statistics>) emitter -> {
             try {
                 String curLogin;
                 String curUserID;
@@ -233,6 +231,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean checkInternet() {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        assert connectivityManager != null;
         NetworkInfo networkinfo = connectivityManager.getActiveNetworkInfo();
         if (networkinfo == null || !networkinfo.isConnected()) {
             Toast.makeText(this, "Подключите интернет", Toast.LENGTH_SHORT).show();
@@ -251,36 +250,48 @@ public class MainActivity extends AppCompatActivity {
 
         api.getUser(request)
                 .subscribeOn(Schedulers.io())
-                .subscribe(new SingleSubscriber<RetrofitModel>() {
-            @Override
-            public void onSuccess(RetrofitModel value) {
-                mInfoTextView.setText(value.getAvatarUrl());
-                modelList.add(value);
-            }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SingleObserver<RetrofitModel>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        mInfoTextView.setText("");
+                    }
 
-            @Override
-            public void onError(Throwable error) {
-                error.printStackTrace();
-            }
-        });
+                    @Override
+                    public void onSuccess(RetrofitModel value) {
+                        mInfoTextView.setText(value.getAvatarUrl());
+                        modelList.add(value);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+                });
 
         api.getUserRepos(request)
                 .subscribeOn(Schedulers.io())
-                .subscribe(new SingleSubscriber<List<RepositoryModel>>() {
-            @Override
-            public void onSuccess(List<RepositoryModel> value) {
-                StringBuilder sb = new StringBuilder();
-                for (int i = 0; i < value.size(); i++) {
-                    sb.append(value.get(i).getFullName());
-                    sb.append("\n");
-                }
-                mReposTextView.setText(sb.toString());
-            }
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new SingleObserver<List<RepositoryModel>>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        mReposTextView.setText("");
+                    }
 
-            @Override
-            public void onError(Throwable error) {
-                error.printStackTrace();
-            }
-        });
+                    @Override
+                    public void onSuccess(List<RepositoryModel> value) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < value.size(); i++) {
+                            sb.append(value.get(i).getFullName());
+                            sb.append("\n");
+                        }
+                        mReposTextView.setText(sb.toString());
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        error.printStackTrace();
+                    }
+                });
     }
 }
