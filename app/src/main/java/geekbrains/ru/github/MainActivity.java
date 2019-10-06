@@ -16,16 +16,15 @@ import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import com.orm.SugarContext;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
-import geekbrains.ru.github.models.SugarModel;
-import geekbrains.ru.github.models.retrofit.RepositoryModel;
-import geekbrains.ru.github.models.retrofit.RetrofitModel;
-import geekbrains.ru.github.models.room.RoomModel;
-import io.reactivex.Single;
+import geekbrains.ru.github.databases.Statistics;
+import geekbrains.ru.github.databases.room.RoomHelper;
+import geekbrains.ru.github.databases.sugar.SugarHelper;
+import geekbrains.ru.github.retrofit.RepositoryModel;
+import geekbrains.ru.github.retrofit.RestApi;
+import geekbrains.ru.github.retrofit.RetrofitModel;
 import io.reactivex.SingleObserver;
-import io.reactivex.SingleOnSubscribe;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
@@ -33,8 +32,6 @@ import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-import retrofit2.http.GET;
-import retrofit2.http.Path;
 
 public class MainActivity extends AppCompatActivity {
     private TextView mInfoTextView;
@@ -45,29 +42,14 @@ public class MainActivity extends AppCompatActivity {
     private List<Statistics> roomStatistics = new ArrayList<>();
     private List<Statistics> sugarStatistics = new ArrayList<>();
 
+    RoomHelper roomHelper = new RoomHelper();
+    SugarHelper sugarHelper = new SugarHelper();
+
     List<RetrofitModel> modelList = new ArrayList<>();
 
     private Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.github.com/")
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(GsonConverterFactory.create()).build();
-
-    public interface RestApi {
-        @GET("users/{path}")
-        Single<RetrofitModel> getUser(@Path("path") String user);
-
-        @GET("users/{user}/repos")
-        Single<List<RepositoryModel>> getUserRepos(@Path("user") String user);
-    }
-
-    class Statistics {
-        Long time;
-        Integer recordsCount;
-
-        Statistics(Date start, Date finish, Integer recordsCount) {
-            this.time = finish.getTime() - start.getTime();
-            this.recordsCount = recordsCount;
-        }
-    }
 
     @SuppressLint("DefaultLocale")
     String getResult(List<Statistics> statisticsList) {
@@ -116,71 +98,15 @@ public class MainActivity extends AppCompatActivity {
 
         Button btnLoad = findViewById(R.id.btnLoad);
         btnLoad.setOnClickListener((v) -> loadUserInfoOnClick());
-        btnSaveAllSugar.setOnClickListener(view -> saveAllSugar());
-        btnSelectAllSugar.setOnClickListener(view -> selectAllSugar());
-        btnDeleteAllSugar.setOnClickListener(view -> deleteAllSugar());
-        btnSaveAllRoom.setOnClickListener(view -> saveAllRoom());
-        btnSelectAllRoom.setOnClickListener(view -> selectAllRoom());
-        btnDeleteAllRoom.setOnClickListener(view -> deleteAllRoom());
+        btnSaveAllSugar.setOnClickListener(view -> sugarHelper.saveAll(modelList).subscribeWith(createObserver("sugar")));
+        btnSelectAllSugar.setOnClickListener(view -> sugarHelper.selectAll().subscribeWith(createObserver("sugar")));
+        btnDeleteAllSugar.setOnClickListener(view -> sugarHelper.deleteAll().subscribeWith(createObserver("sugar")));
+        btnSaveAllRoom.setOnClickListener(view -> roomHelper.saveAll(modelList).subscribeWith(createObserver("room")));
+        btnSelectAllRoom.setOnClickListener(view -> roomHelper.selectAll().subscribeWith(createObserver("room")));
+        btnDeleteAllRoom.setOnClickListener(view -> roomHelper.deleteAll().subscribeWith(createObserver("room")));
     }
 
-    private void deleteAllRoom() {
-        Single<Statistics> singleDeleteAllRoom = Single.create((SingleOnSubscribe<Statistics>) emitter -> {
-            try {
-                List<RoomModel> products = OrmApp.get().getDB().productDao().getAll();
-                Date first = new Date();
-                OrmApp.get().getDB().productDao().deleteAll();
-
-                emitter.onSuccess(new Statistics(first, new Date(), products.size()));
-            } catch (Exception e) {
-                emitter.onError(e);
-            }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-        singleDeleteAllRoom.subscribeWith(CreateObserver("room"));
-    }
-
-    private void selectAllRoom() {
-        Single<Statistics> singleSelectAllRoom = Single.create((SingleOnSubscribe<Statistics>) emitter -> {
-            try {
-                Date first = new Date();
-                List<RoomModel> products = OrmApp.get().getDB().productDao().getAll();
-                emitter.onSuccess(new Statistics(first, new Date(), products.size()));
-            } catch (Exception e) {
-                emitter.onError(e);
-            }
-        }).subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-        singleSelectAllRoom.subscribeWith(CreateObserver("room"));
-    }
-
-    private void saveAllRoom() {
-        Single<Statistics> singleSaveAllRoom = Single.create((SingleOnSubscribe<Statistics>) emitter -> {
-            String curLogin;
-            String curUserID;
-            String curAvatarUrl;
-            Date first = new Date();
-            List<RoomModel> roomModelList = new ArrayList<>();
-            for (RetrofitModel curItem : modelList) {
-                RoomModel roomModel = new RoomModel();
-                curLogin = curItem.getLogin();
-                curUserID = curItem.getId();
-                curAvatarUrl = curItem.getAvatarUrl();
-                roomModel.setLogin(curLogin);
-                roomModel.setAvatarUrl(curAvatarUrl);
-                roomModel.setUserId(curUserID);
-                roomModelList.add(roomModel);
-            }
-            OrmApp.get().getDB().productDao().insertAll(roomModelList);
-            Date second = new Date();
-            List<RoomModel> tempList = OrmApp.get().getDB().productDao().getAll();
-            emitter.onSuccess(new Statistics(first, second, tempList.size()));
-        }).subscribeOn(io.reactivex.schedulers.Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-        singleSaveAllRoom.subscribeWith(CreateObserver("room"));
-    }
-
-    private DisposableSingleObserver<Statistics> CreateObserver(String dbName) {
+    private DisposableSingleObserver<Statistics> createObserver(String dbName) {
         TextView textView;
         List<Statistics> stat;
         if (dbName.equals("sugar")) {
@@ -210,62 +136,7 @@ public class MainActivity extends AppCompatActivity {
         };
     }
 
-    @SuppressLint("CheckResult")
-    private void deleteAllSugar() {
-        io.reactivex.Single<Statistics> singleDeleteAll = io.reactivex.Single.create((SingleOnSubscribe<Statistics>) emitter -> {
-            try {
-                List<SugarModel> tempList = SugarModel.listAll(SugarModel.class);
-                Date first = new Date();
-                SugarModel.deleteAll(SugarModel.class);
-                Statistics statistics = new Statistics(first, new Date(), tempList.size());
-                emitter.onSuccess(statistics);
-            } catch (Exception e) {
-                emitter.onError(e);
-            }
-        }).subscribeOn(io.reactivex.schedulers.Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-        singleDeleteAll.subscribeWith(CreateObserver("sugar"));
-    }
 
-    private void selectAllSugar() {
-        io.reactivex.Single<Statistics> singleSelectAll = io.reactivex.Single.create((SingleOnSubscribe<Statistics>) emitter -> {
-            try {
-                Date first = new Date();
-                List<SugarModel> tempList = SugarModel.listAll(SugarModel.class);
-                Statistics statistics = new Statistics(first, new Date(), tempList.size());
-                emitter.onSuccess(statistics);
-            } catch (Exception e) {
-                emitter.onError(e);
-            }
-        }).subscribeOn(io.reactivex.schedulers.Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-        singleSelectAll.subscribeWith(CreateObserver("sugar"));
-    }
-
-    private void saveAllSugar() {
-        Single<Statistics> singleSaveAll = Single.create((SingleOnSubscribe<Statistics>) emitter -> {
-            try {
-                String curLogin;
-                String curUserID;
-                String curAvatarUrl;
-                Date first = new Date();
-                for (RetrofitModel curItem : modelList) {
-                    curLogin = curItem.getLogin();
-                    curUserID = curItem.getId();
-                    curAvatarUrl = curItem.getAvatarUrl();
-                    SugarModel sugarModel = new SugarModel(curLogin, curUserID, curAvatarUrl);
-                    sugarModel.save();
-                }
-                List<SugarModel> tempList = SugarModel.listAll(SugarModel.class);
-                Statistics statistics = new Statistics(first, new Date(), tempList.size());
-                emitter.onSuccess(statistics);
-            } catch (Exception e) {
-                emitter.onError(e);
-            }
-        }).subscribeOn(io.reactivex.schedulers.Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread());
-        singleSaveAll.subscribeWith(CreateObserver("sugar"));
-    }
 
     @Override
     protected void onDestroy() {

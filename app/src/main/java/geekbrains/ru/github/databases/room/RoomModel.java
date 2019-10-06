@@ -1,4 +1,4 @@
-package geekbrains.ru.github.models.room;
+package geekbrains.ru.github.databases.room;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;

@@ -1,4 +1,4 @@
-package geekbrains.ru.github.models.room;
+package geekbrains.ru.github.databases.room;
 
 import androidx.room.Dao;
 import androidx.room.Delete;

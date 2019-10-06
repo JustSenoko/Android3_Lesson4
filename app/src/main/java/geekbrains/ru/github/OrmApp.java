@@ -4,7 +4,7 @@ import android.app.Application;
 
 import androidx.room.Room;
 
-import geekbrains.ru.github.databases.GithubRoomDatabase;
+import geekbrains.ru.github.databases.room.GithubRoomDatabase;
 
 public class OrmApp extends Application {
 
