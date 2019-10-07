@@ -1,8 +1,6 @@
 package geekbrains.ru.github;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
-import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.widget.Button;
@@ -20,6 +18,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import geekbrains.ru.github.dagger.AppComponent;
+import geekbrains.ru.github.dagger.NetworkComponent;
 import geekbrains.ru.github.databases.Statistics;
 import geekbrains.ru.github.databases.room.RoomHelper;
 import geekbrains.ru.github.databases.sugar.SugarHelper;
@@ -46,6 +45,7 @@ public class MainActivity extends AppCompatActivity {
     RoomHelper roomHelper;
     @Inject
     SugarHelper sugarHelper;
+    private NetworkComponent networkComponent;
 
     List<RetrofitModel> modelList = new ArrayList<>();
 
@@ -82,8 +82,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         AppComponent appComponent = OrmApp.getComponent();
         appComponent.injectsToMainActivity(this);//вызывая этот метод мы инициализируем все Inject, которые данный компонент может
-        //roomHelper = appComponent.roomComponent().getRoomHelper();
-        //sugarHelper = appComponent.sugarComponent().getSugarHelper();
+        roomHelper = appComponent.roomComponent().getRoomHelper();
+        sugarHelper = appComponent.sugarComponent().getSugarHelper();
+        networkComponent = OrmApp.getNetworkComponent(this);
         setContentView(R.layout.activity_main);
         SugarContext.init(this);
         initButtons();
@@ -149,11 +150,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private boolean checkInternet() {
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        assert connectivityManager != null;
-        NetworkInfo networkinfo = connectivityManager.getActiveNetworkInfo();
-        if (networkinfo == null || !networkinfo.isConnected()) {
+        NetworkInfo networkInfo = networkComponent.getNetwork();
+        if (networkInfo == null || !networkInfo.isConnected()) {
             Toast.makeText(this, "Подключите интернет", Toast.LENGTH_SHORT).show();
             return true;
         }

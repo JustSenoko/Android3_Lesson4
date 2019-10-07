@@ -9,7 +9,9 @@ public interface AppComponent {
     void injectsToMainActivity(MainActivity mainActivity);
 
     Retrofit getRetrofit();
-
+//    Single<RetrofitModel> getUserInfo(String userName);
+//    Single<List<RepositoryModel>> getUserRepos(String userName);
+    NetworkComponent getNetworkComponent();
     SugarComponent sugarComponent();
     RoomComponent roomComponent();
 }

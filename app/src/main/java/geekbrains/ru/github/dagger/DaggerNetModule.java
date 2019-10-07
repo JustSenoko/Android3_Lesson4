@@ -1,5 +1,9 @@
 package geekbrains.ru.github.dagger;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 
 import java.util.List;
@@ -16,13 +20,13 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 @Module
 public class DaggerNetModule {
-    //final Context data;
+    final Context context;
 
-    public DaggerNetModule() {}
+    //public DaggerNetModule() {}
 
-    //public DaggerNetModule(Context data){
-//        this.data = data;
-//    }
+    public DaggerNetModule(Context context){
+        this.context = context;
+    }
 
     @Provides
     Retrofit makeRetrofit(){
@@ -44,5 +48,13 @@ public class DaggerNetModule {
     Single<List<RetrofitModel>> getCall(RestApi api){
         return api.getUsers().
                 subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread());
+    }
+
+    @Provides
+    public NetworkInfo getNetworkInfo(){
+        ConnectivityManager connectivityManager =
+                (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if(connectivityManager == null) return null;
+        return connectivityManager.getActiveNetworkInfo();
     }
 }
