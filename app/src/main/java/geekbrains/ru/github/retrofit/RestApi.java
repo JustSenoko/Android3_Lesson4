@@ -12,4 +12,7 @@ public interface RestApi {
 
     @GET("users/{user}/repos")
     Single<List<RepositoryModel>> getUserRepos(@Path("user") String user);
+
+    @GET("users")
+    Single<List<RetrofitModel>> getUsers();
 }

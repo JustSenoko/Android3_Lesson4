@@ -12,12 +12,14 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import com.orm.SugarContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.inject.Inject;
+
+import geekbrains.ru.github.dagger.AppComponent;
 import geekbrains.ru.github.databases.Statistics;
 import geekbrains.ru.github.databases.room.RoomHelper;
 import geekbrains.ru.github.databases.sugar.SugarHelper;
@@ -30,8 +32,6 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     private TextView mInfoTextView;
@@ -42,14 +42,18 @@ public class MainActivity extends AppCompatActivity {
     private List<Statistics> roomStatistics = new ArrayList<>();
     private List<Statistics> sugarStatistics = new ArrayList<>();
 
-    RoomHelper roomHelper = new RoomHelper();
-    SugarHelper sugarHelper = new SugarHelper();
+    @Inject
+    RoomHelper roomHelper;
+    @Inject
+    SugarHelper sugarHelper;
 
     List<RetrofitModel> modelList = new ArrayList<>();
 
-    private Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.github.com/")
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .addConverterFactory(GsonConverterFactory.create()).build();
+    @Inject
+    RestApi api;
+
+//    @Inject
+//    Single<List<RetrofitModel>> request;
 
     @SuppressLint("DefaultLocale")
     String getResult(List<Statistics> statisticsList) {
@@ -73,11 +77,13 @@ public class MainActivity extends AppCompatActivity {
         return sum/ size;
     }
 
-    RestApi api = retrofit.create(RestApi.class);
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        AppComponent appComponent = OrmApp.getComponent();
+        appComponent.injectsToMainActivity(this);//вызывая этот метод мы инициализируем все Inject, которые данный компонент может
+        //roomHelper = appComponent.roomComponent().getRoomHelper();
+        //sugarHelper = appComponent.sugarComponent().getSugarHelper();
         setContentView(R.layout.activity_main);
         SugarContext.init(this);
         initButtons();
@@ -135,8 +141,6 @@ public class MainActivity extends AppCompatActivity {
             }
         };
     }
-
-
 
     @Override
     protected void onDestroy() {

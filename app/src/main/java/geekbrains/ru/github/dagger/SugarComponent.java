@@ -3,8 +3,7 @@ package geekbrains.ru.github.dagger;
 import dagger.Subcomponent;
 import geekbrains.ru.github.databases.sugar.SugarHelper;
 
-@RetrofitScope
-@Subcomponent(modules = {DaggerRoomModule.class})
+@Subcomponent(modules = {DaggerSugarModule.class})
 public interface SugarComponent {
     SugarHelper getSugarHelper();
 }
