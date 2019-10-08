@@ -50,8 +50,6 @@ public class MainActivity extends AppCompatActivity {
 
     List<RetrofitModel> modelList = new ArrayList<>();
 
-    //private Single<List<RetrofitModel>> request;
-
     @SuppressLint("DefaultLocale")
     String getResult(List<Statistics> statisticsList) {
         if (statisticsList.size() == 0) {
@@ -159,11 +157,9 @@ public class MainActivity extends AppCompatActivity {
     public void loadUserInfoOnClick() {
         if (checkInternet()) return;
         loadUserInfo(editText.getText().toString());
-        //loadUsers();
     }
 
     private void loadUserInfo(String userName) {
-        modelList.clear();
         retrofitHelper.getUserInfo(userName)
                 .subscribe(new SingleObserver<RetrofitModel>() {
                     @Override
@@ -207,53 +203,4 @@ public class MainActivity extends AppCompatActivity {
                 });
 
     }
-
-    /*private void loadUsers() {
-        mInfoTextView.setText("");
-        modelList.clear();
-        request.subscribe(new SingleObserver<List<RetrofitModel>>() {
-            @Override
-            public void onSubscribe(Disposable d) {
-                mInfoTextView.setText("");
-            }
-
-            @Override
-            public void onSuccess(List<RetrofitModel> value) {
-                for (RetrofitModel curModel : value) {
-                    mInfoTextView.append(curModel.getAvatarUrl());
-                    modelList.add(curModel);
-                }
-            }
-
-            @Override
-            public void onError(Throwable e) {
-                e.printStackTrace();
-            }
-        });
-
-        *//*api.getUserRepos(request)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SingleObserver<List<RepositoryModel>>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        mReposTextView.setText("");
-                    }
-
-                    @Override
-                    public void onSuccess(List<RepositoryModel> value) {
-                        StringBuilder sb = new StringBuilder();
-                        for (int i = 0; i < value.size(); i++) {
-                            sb.append(value.get(i).getFullName());
-                            sb.append("\n");
-                        }
-                        mReposTextView.setText(sb.toString());
-                    }
-
-                    @Override
-                    public void onError(Throwable error) {
-                        error.printStackTrace();
-                    }
-                });*//*
-    }*/
 }

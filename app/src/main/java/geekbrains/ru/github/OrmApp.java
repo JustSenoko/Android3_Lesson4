@@ -5,15 +5,11 @@ import android.app.Application;
 
 import androidx.room.Room;
 
-import java.util.List;
-
 import geekbrains.ru.github.dagger.AppComponent;
 import geekbrains.ru.github.dagger.DaggerAppComponent;
 import geekbrains.ru.github.dagger.DaggerNetModule;
 import geekbrains.ru.github.dagger.NetworkComponent;
-import geekbrains.ru.github.dagger.SugarComponent;
 import geekbrains.ru.github.databases.room.GithubRoomDatabase;
-import geekbrains.ru.github.retrofit.RetrofitModel;
 
 public class OrmApp extends Application {
 
@@ -44,9 +40,5 @@ public class OrmApp extends Application {
 
     public static NetworkComponent getNetworkComponent(Activity activity) {
         return component.getNetworkComponent();
-    }
-
-    public static SugarComponent getSugarComponent(List<RetrofitModel> models) {
-        return component.sugarComponent();
     }
 }
