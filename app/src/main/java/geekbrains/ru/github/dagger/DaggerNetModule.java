@@ -11,6 +11,7 @@ import java.util.List;
 import dagger.Module;
 import dagger.Provides;
 import geekbrains.ru.github.retrofit.RestApi;
+import geekbrains.ru.github.retrofit.RetrofitHelper;
 import geekbrains.ru.github.retrofit.RetrofitModel;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -56,5 +57,10 @@ public class DaggerNetModule {
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if(connectivityManager == null) return null;
         return connectivityManager.getActiveNetworkInfo();
+    }
+
+    @Provides
+    public RetrofitHelper getRetrofitHelper(RestApi api) {
+        return new RetrofitHelper(api);
     }
 }

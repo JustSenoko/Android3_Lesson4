@@ -22,9 +22,9 @@ import geekbrains.ru.github.dagger.NetworkComponent;
 import geekbrains.ru.github.databases.Statistics;
 import geekbrains.ru.github.databases.room.RoomHelper;
 import geekbrains.ru.github.databases.sugar.SugarHelper;
-import geekbrains.ru.github.retrofit.RestApi;
+import geekbrains.ru.github.retrofit.RepositoryModel;
+import geekbrains.ru.github.retrofit.RetrofitHelper;
 import geekbrains.ru.github.retrofit.RetrofitModel;
-import io.reactivex.Single;
 import io.reactivex.SingleObserver;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
@@ -43,15 +43,14 @@ public class MainActivity extends AppCompatActivity {
     RoomHelper roomHelper;
     @Inject
     SugarHelper sugarHelper;
+    @Inject
+    RetrofitHelper retrofitHelper;
+
     private NetworkComponent networkComponent;
 
     List<RetrofitModel> modelList = new ArrayList<>();
 
-    @Inject
-    RestApi api;
-
-    @Inject
-    Single<List<RetrofitModel>> request;
+    //private Single<List<RetrofitModel>> request;
 
     @SuppressLint("DefaultLocale")
     String getResult(List<Statistics> statisticsList) {
@@ -83,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         roomHelper = appComponent.roomComponent().getRoomHelper();
         sugarHelper = appComponent.sugarComponent().getSugarHelper();
         networkComponent = OrmApp.getNetworkComponent(this);
+        retrofitHelper = appComponent.getNetworkComponent().getRetrofitHelper();
         setContentView(R.layout.activity_main);
         SugarContext.init(this);
         initButtons();
@@ -158,11 +158,57 @@ public class MainActivity extends AppCompatActivity {
 
     public void loadUserInfoOnClick() {
         if (checkInternet()) return;
-
-        loadUsers();
+        loadUserInfo(editText.getText().toString());
+        //loadUsers();
     }
 
-    private void loadUsers() {
+    private void loadUserInfo(String userName) {
+        modelList.clear();
+        retrofitHelper.getUserInfo(userName)
+                .subscribe(new SingleObserver<RetrofitModel>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        mInfoTextView.setText("");
+                    }
+
+                    @Override
+                    public void onSuccess(RetrofitModel value) {
+                        mInfoTextView.setText(value.getAvatarUrl());
+                        modelList.add(value);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+                });
+
+        retrofitHelper.getUserRepos(userName)
+                .subscribe(new SingleObserver<List<RepositoryModel>>() {
+                    @Override
+                    public void onSubscribe(Disposable d) {
+                        mReposTextView.setText("");
+                    }
+
+                    @Override
+                    public void onSuccess(List<RepositoryModel> value) {
+                        StringBuilder sb = new StringBuilder();
+                        for (int i = 0; i < value.size(); i++) {
+                            sb.append(value.get(i).getFullName());
+                            sb.append("\n");
+                        }
+                        mReposTextView.setText(sb.toString());
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        error.printStackTrace();
+                    }
+                });
+
+    }
+
+    /*private void loadUsers() {
         mInfoTextView.setText("");
         modelList.clear();
         request.subscribe(new SingleObserver<List<RetrofitModel>>() {
@@ -185,7 +231,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        /*api.getUserRepos(request)
+        *//*api.getUserRepos(request)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SingleObserver<List<RepositoryModel>>() {
@@ -208,6 +254,6 @@ public class MainActivity extends AppCompatActivity {
                     public void onError(Throwable error) {
                         error.printStackTrace();
                     }
-                });*/
-    }
+                });*//*
+    }*/
 }
