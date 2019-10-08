@@ -22,15 +22,13 @@ import geekbrains.ru.github.dagger.NetworkComponent;
 import geekbrains.ru.github.databases.Statistics;
 import geekbrains.ru.github.databases.room.RoomHelper;
 import geekbrains.ru.github.databases.sugar.SugarHelper;
-import geekbrains.ru.github.retrofit.RepositoryModel;
 import geekbrains.ru.github.retrofit.RestApi;
 import geekbrains.ru.github.retrofit.RetrofitModel;
+import io.reactivex.Single;
 import io.reactivex.SingleObserver;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableSingleObserver;
-import io.reactivex.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
     private TextView mInfoTextView;
@@ -52,8 +50,8 @@ public class MainActivity extends AppCompatActivity {
     @Inject
     RestApi api;
 
-//    @Inject
-//    Single<List<RetrofitModel>> request;
+    @Inject
+    Single<List<RetrofitModel>> request;
 
     @SuppressLint("DefaultLocale")
     String getResult(List<Statistics> statisticsList) {
@@ -74,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < size; i++) {
             sum += statisticsList.get(i).time;
         }
-        return sum/ size;
+        return sum / size;
     }
 
     @Override
@@ -161,33 +159,33 @@ public class MainActivity extends AppCompatActivity {
     public void loadUserInfoOnClick() {
         if (checkInternet()) return;
 
-        downloadOneUrl(editText.getText().toString());
+        loadUsers();
     }
 
-    private void downloadOneUrl(String request) {
+    private void loadUsers() {
+        mInfoTextView.setText("");
+        modelList.clear();
+        request.subscribe(new SingleObserver<List<RetrofitModel>>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+                mInfoTextView.setText("");
+            }
 
-        api.getUser(request)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new SingleObserver<RetrofitModel>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        mInfoTextView.setText("");
-                    }
+            @Override
+            public void onSuccess(List<RetrofitModel> value) {
+                for (RetrofitModel curModel : value) {
+                    mInfoTextView.append(curModel.getAvatarUrl());
+                    modelList.add(curModel);
+                }
+            }
 
-                    @Override
-                    public void onSuccess(RetrofitModel value) {
-                        mInfoTextView.setText(value.getAvatarUrl());
-                        modelList.add(value);
-                    }
+            @Override
+            public void onError(Throwable e) {
+                e.printStackTrace();
+            }
+        });
 
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-                });
-
-        api.getUserRepos(request)
+        /*api.getUserRepos(request)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new SingleObserver<List<RepositoryModel>>() {
@@ -210,6 +208,6 @@ public class MainActivity extends AppCompatActivity {
                     public void onError(Throwable error) {
                         error.printStackTrace();
                     }
-                });
+                });*/
     }
 }
