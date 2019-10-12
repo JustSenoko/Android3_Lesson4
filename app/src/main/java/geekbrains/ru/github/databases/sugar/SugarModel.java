@@ -1,4 +1,4 @@
-package geekbrains.ru.github.models;
+package geekbrains.ru.github.databases.sugar;
 
 import com.orm.SugarRecord;
 
