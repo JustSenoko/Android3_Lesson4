@@ -5,7 +5,7 @@ import dagger.Provides;
 import geekbrains.ru.github.databases.sugar.SugarHelper;
 
 @Module
-public class DaggerSugarModule {
+class DaggerSugarModule {
     @Provides
     SugarHelper getSugarHelper(){
         return new SugarHelper();

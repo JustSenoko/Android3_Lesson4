@@ -1,9 +1,6 @@
 package geekbrains.ru.github;
 
-import android.annotation.SuppressLint;
-import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -12,23 +9,9 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.orm.SugarContext;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.inject.Inject;
 
-import geekbrains.ru.github.dagger.AppComponent;
-import geekbrains.ru.github.dagger.NetworkComponent;
-import geekbrains.ru.github.databases.Statistics;
-import geekbrains.ru.github.databases.room.RoomHelper;
-import geekbrains.ru.github.databases.sugar.SugarHelper;
-import geekbrains.ru.github.retrofit.RepositoryModel;
-import geekbrains.ru.github.retrofit.RetrofitHelper;
-import geekbrains.ru.github.retrofit.RetrofitModel;
-import io.reactivex.SingleObserver;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.observers.DisposableObserver;
 
 public class MainActivity extends AppCompatActivity {
     private TextView mInfoTextView;
@@ -36,51 +19,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView mRoomTextView;
     private TextView mReposTextView;
     private EditText editText;
-    private List<Statistics> roomStatistics = new ArrayList<>();
-    private List<Statistics> sugarStatistics = new ArrayList<>();
 
     @Inject
-    RoomHelper roomHelper;
-    @Inject
-    SugarHelper sugarHelper;
-    @Inject
-    RetrofitHelper retrofitHelper;
-
-    private NetworkComponent networkComponent;
-
-    List<RetrofitModel> modelList = new ArrayList<>();
-
-    @SuppressLint("DefaultLocale")
-    String getResult(List<Statistics> statisticsList) {
-        if (statisticsList.size() == 0) {
-            return "";
-        }
-        Statistics lastEntry = statisticsList.get(statisticsList.size() - 1);
-        return String.format("количество = %d\nмилисекунд = %d\nсреднее = %d",
-                lastEntry.recordsCount, lastEntry.time, getTimeAvg(statisticsList));
-    }
-
-    private Long getTimeAvg(List<Statistics> statisticsList) {
-        int size = statisticsList.size();
-        if (size == 0) {
-            return 0L;
-        }
-        Long sum = 0L;
-        for (int i = 0; i < size; i++) {
-            sum += statisticsList.get(i).time;
-        }
-        return sum / size;
-    }
+    Presenter presenter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        AppComponent appComponent = OrmApp.getComponent();
-        appComponent.injectsToMainActivity(this);//вызывая этот метод мы инициализируем все Inject, которые данный компонент может
-        roomHelper = appComponent.roomComponent().getRoomHelper();
-        sugarHelper = appComponent.sugarComponent().getSugarHelper();
-        networkComponent = OrmApp.getNetworkComponent(this);
-        retrofitHelper = appComponent.getNetworkComponent().getRetrofitHelper();
+
+        OrmApp.getPresenterComponent().inject(this);
         setContentView(R.layout.activity_main);
         SugarContext.init(this);
         initButtons();
@@ -92,51 +39,51 @@ public class MainActivity extends AppCompatActivity {
         mSugarTextView = findViewById(R.id.sugar_result);
         mRoomTextView = findViewById(R.id.room_result);
         mReposTextView = findViewById(R.id.tvRepos);
-        Button btnSaveAllSugar = findViewById(R.id.btnSaveAllSugar);
-        Button btnSelectAllSugar = findViewById(R.id.btnSelectAllSugar);
-        Button btnDeleteAllSugar = findViewById(R.id.btnDeleteAllSugar);
-        Button btnSaveAllRoom = findViewById(R.id.btnSaveAllRoom);
-        Button btnSelectAllRoom = findViewById(R.id.btnSelectAllRoom);
-        Button btnDeleteAllRoom = findViewById(R.id.btnDeleteAllRoom);
 
-        Button btnLoad = findViewById(R.id.btnLoad);
-        btnLoad.setOnClickListener((v) -> loadUserInfoOnClick());
-        btnSaveAllSugar.setOnClickListener(view -> sugarHelper.saveAll(modelList).subscribeWith(createObserver("sugar")));
-        btnSelectAllSugar.setOnClickListener(view -> sugarHelper.selectAll().subscribeWith(createObserver("sugar")));
-        btnDeleteAllSugar.setOnClickListener(view -> sugarHelper.deleteAll().subscribeWith(createObserver("sugar")));
-        btnSaveAllRoom.setOnClickListener(view -> roomHelper.saveAll(modelList).subscribeWith(createObserver("room")));
-        btnSelectAllRoom.setOnClickListener(view -> roomHelper.selectAll().subscribeWith(createObserver("room")));
-        btnDeleteAllRoom.setOnClickListener(view -> roomHelper.deleteAll().subscribeWith(createObserver("room")));
+        findViewById(R.id.btnLoad).setOnClickListener((v) -> loadUserInfo());
+        findViewById(R.id.btnSaveAllSugar).setOnClickListener(view -> presenter.saveAllSugar());
+        findViewById(R.id.btnSelectAllSugar).setOnClickListener(view -> presenter.selectAllSugar());
+        findViewById(R.id.btnDeleteAllSugar).setOnClickListener(view -> presenter.deleteAllSugar());
+        findViewById(R.id.btnSaveAllRoom).setOnClickListener(view -> presenter.saveAllRoom());
+        findViewById(R.id.btnSelectAllRoom).setOnClickListener(view -> presenter.selectAllRoom());
+        findViewById(R.id.btnDeleteAllRoom).setOnClickListener(view -> presenter.deleteAllRoom());
     }
 
-    private DisposableSingleObserver<Statistics> createObserver(String dbName) {
-        TextView textView;
-        List<Statistics> stat;
-        if (dbName.equals("sugar")) {
-            textView = mSugarTextView;
-            stat = sugarStatistics;
-        } else {
-            textView = mRoomTextView;
-            stat = roomStatistics;
-        }
-        return new DisposableSingleObserver<Statistics>() {
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        DisposableObserver<String> showInfo = createObserver(mInfoTextView);
+        DisposableObserver<String> showReposInfo = createObserver(mReposTextView);
+
+        DisposableObserver<String> showRoom = createObserver(mRoomTextView);
+        DisposableObserver<String> showSugar = createObserver(mSugarTextView);
+
+        presenter.bindView(showInfo, showReposInfo, showRoom, showSugar);
+    }
+
+    private DisposableObserver<String> createObserver(TextView textView) {
+        return new DisposableObserver<String>() {
             @Override
-            protected void onStart() {
-                super.onStart();
-                textView.setText("");
+            public void onNext(String s) {
+                textView.setText(s);
             }
 
             @Override
-            public void onSuccess(@NonNull Statistics s) {
-                stat.add(s);
-                textView.setText(getResult(stat));
+            public void onError(Throwable e) {
+                textView.setText(e.getLocalizedMessage());
             }
 
             @Override
-            public void onError(@NonNull Throwable e) {
-                textView.setText(String.format("%s%s", getResources().getString(R.string.error), e.getMessage()));
+            public void onComplete() {
             }
         };
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        presenter.unbindView();
     }
 
     @Override
@@ -145,62 +92,11 @@ public class MainActivity extends AppCompatActivity {
         SugarContext.terminate();
     }
 
-    private boolean checkInternet() {
-        NetworkInfo networkInfo = networkComponent.getNetwork();
-        if (networkInfo == null || !networkInfo.isConnected()) {
+    private void loadUserInfo() {
+        if (!presenter.checkInternet()) {
             Toast.makeText(this, "Подключите интернет", Toast.LENGTH_SHORT).show();
-            return true;
+            return;
         }
-        return false;
-    }
-
-    public void loadUserInfoOnClick() {
-        if (checkInternet()) return;
-        loadUserInfo(editText.getText().toString());
-    }
-
-    private void loadUserInfo(String userName) {
-        retrofitHelper.getUserInfo(userName)
-                .subscribe(new SingleObserver<RetrofitModel>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        mInfoTextView.setText("");
-                    }
-
-                    @Override
-                    public void onSuccess(RetrofitModel value) {
-                        mInfoTextView.setText(value.getAvatarUrl());
-                        modelList.add(value);
-                    }
-
-                    @Override
-                    public void onError(Throwable e) {
-                        e.printStackTrace();
-                    }
-                });
-
-        retrofitHelper.getUserRepos(userName)
-                .subscribe(new SingleObserver<List<RepositoryModel>>() {
-                    @Override
-                    public void onSubscribe(Disposable d) {
-                        mReposTextView.setText("");
-                    }
-
-                    @Override
-                    public void onSuccess(List<RepositoryModel> value) {
-                        StringBuilder sb = new StringBuilder();
-                        for (int i = 0; i < value.size(); i++) {
-                            sb.append(value.get(i).getFullName());
-                            sb.append("\n");
-                        }
-                        mReposTextView.setText(sb.toString());
-                    }
-
-                    @Override
-                    public void onError(Throwable error) {
-                        error.printStackTrace();
-                    }
-                });
-
+        presenter.loadUserInfo(editText.getText().toString());
     }
 }

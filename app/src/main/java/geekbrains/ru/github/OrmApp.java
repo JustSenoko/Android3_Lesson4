@@ -1,6 +1,5 @@
 package geekbrains.ru.github;
 
-import android.app.Activity;
 import android.app.Application;
 
 import androidx.room.Room;
@@ -8,15 +7,20 @@ import androidx.room.Room;
 import geekbrains.ru.github.dagger.AppComponent;
 import geekbrains.ru.github.dagger.DaggerAppComponent;
 import geekbrains.ru.github.dagger.DaggerNetModule;
+import geekbrains.ru.github.dagger.DaggerPresenterComponent;
 import geekbrains.ru.github.dagger.NetworkComponent;
+import geekbrains.ru.github.dagger.PresenterComponent;
+import geekbrains.ru.github.dagger.RoomComponent;
+import geekbrains.ru.github.dagger.SugarComponent;
 import geekbrains.ru.github.databases.room.GithubRoomDatabase;
 
 public class OrmApp extends Application {
 
     private static final String DATABASE_NAME = "DATABASE_USER_GIT";
-    public static GithubRoomDatabase database;
-    public static OrmApp INSTANCE;
+    private static GithubRoomDatabase database;
+    private static OrmApp INSTANCE;
     private static AppComponent component;
+    private static PresenterComponent presenterComponent;
 
     @Override
     public void onCreate() {
@@ -24,6 +28,7 @@ public class OrmApp extends Application {
         database = Room.databaseBuilder(getApplicationContext(), GithubRoomDatabase.class, DATABASE_NAME).build();
         INSTANCE = this;
         component = DaggerAppComponent.builder().daggerNetModule(new DaggerNetModule(getApplicationContext())).build();
+        presenterComponent = DaggerPresenterComponent.create();
     }
 
     public GithubRoomDatabase getDB() {
@@ -38,7 +43,19 @@ public class OrmApp extends Application {
         return component;
     }
 
-    public static NetworkComponent getNetworkComponent(Activity activity) {
+    public static NetworkComponent getNetworkComponent() {
         return component.getNetworkComponent();
+    }
+
+    public static SugarComponent getSugarComponent() {
+        return component.getSugarComponent();
+    }
+
+    public static RoomComponent getRoomComponent() {
+        return component.getRoomComponent();
+    }
+
+    public static PresenterComponent getPresenterComponent() {
+        return presenterComponent;
     }
 }

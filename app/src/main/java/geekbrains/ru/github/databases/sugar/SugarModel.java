@@ -7,7 +7,7 @@ public class SugarModel extends SugarRecord {
     private String userId;
     private String avatarUrl;
     public SugarModel(){}
-    public SugarModel(String login, String userId, String avatarUrl){
+    SugarModel(String login, String userId, String avatarUrl){
         this.login = login;
         this.userId = userId;
         this.avatarUrl = avatarUrl;
