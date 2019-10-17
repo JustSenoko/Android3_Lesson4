@@ -21,9 +21,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 @Module
 public class DaggerNetModule {
-    final Context context;
-
-    //public DaggerNetModule() {}
+    private final Context context;
 
     public DaggerNetModule(Context context){
         this.context = context;

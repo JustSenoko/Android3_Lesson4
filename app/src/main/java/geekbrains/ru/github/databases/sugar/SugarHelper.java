@@ -3,7 +3,7 @@ package geekbrains.ru.github.databases.sugar;
 import java.util.Date;
 import java.util.List;
 
-import geekbrains.ru.github.databases.Statistics;
+import geekbrains.ru.github.databases.statistics.StatisticsRecord;
 import geekbrains.ru.github.retrofit.RetrofitModel;
 import io.reactivex.Single;
 import io.reactivex.SingleOnSubscribe;
@@ -12,8 +12,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 public class SugarHelper {
     public SugarHelper(){}
 
-    public Single<Statistics> saveAll(List<RetrofitModel> modelList){
-        return Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+    public Single<StatisticsRecord> saveAll(List<RetrofitModel> modelList){
+        return Single.create((SingleOnSubscribe<StatisticsRecord>) emitter -> {
             try {
                 String curLogin;
                 String curUserID;
@@ -27,8 +27,8 @@ public class SugarHelper {
                     sugarModel.save();
                 }
                 List<SugarModel> tempList = SugarModel.listAll(SugarModel.class);
-                Statistics statistics = new Statistics(first, new Date(), tempList.size());
-                emitter.onSuccess(statistics);
+                StatisticsRecord statisticsRecord = new StatisticsRecord(first, new Date(), tempList.size());
+                emitter.onSuccess(statisticsRecord);
             } catch (Exception e) {
                 emitter.onError(e);
             }
@@ -36,13 +36,13 @@ public class SugarHelper {
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public Single<Statistics> selectAll(){
-        return Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+    public Single<StatisticsRecord> selectAll(){
+        return Single.create((SingleOnSubscribe<StatisticsRecord>) emitter -> {
             try {
                 Date first = new Date();
                 List<SugarModel> tempList = SugarModel.listAll(SugarModel.class);
-                Statistics statistics = new Statistics(first, new Date(), tempList.size());
-                emitter.onSuccess(statistics);
+                StatisticsRecord statisticsRecord = new StatisticsRecord(first, new Date(), tempList.size());
+                emitter.onSuccess(statisticsRecord);
             } catch (Exception e) {
                 emitter.onError(e);
             }
@@ -50,14 +50,14 @@ public class SugarHelper {
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public Single<Statistics> deleteAll(){
-        return Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+    public Single<StatisticsRecord> deleteAll(){
+        return Single.create((SingleOnSubscribe<StatisticsRecord>) emitter -> {
             try {
                 List<SugarModel> tempList = SugarModel.listAll(SugarModel.class);
                 Date first = new Date();
                 SugarModel.deleteAll(SugarModel.class);
-                Statistics statistics = new Statistics(first, new Date(), tempList.size());
-                emitter.onSuccess(statistics);
+                StatisticsRecord statisticsRecord = new StatisticsRecord(first, new Date(), tempList.size());
+                emitter.onSuccess(statisticsRecord);
             } catch (Exception e) {
                 emitter.onError(e);
             }

@@ -1,15 +1,25 @@
 package geekbrains.ru.github.dagger;
 
 import dagger.Component;
-import geekbrains.ru.github.MainActivity;
+import geekbrains.ru.github.Presenter;
+import geekbrains.ru.github.databases.statistics.Statistics;
 import retrofit2.Retrofit;
 
-@Component(modules = {DaggerNetModule.class, DaggerRoomModule.class, DaggerSugarModule.class})
+@Component(modules = {
+        DaggerNetModule.class,
+        DaggerRoomModule.class,
+        DaggerSugarModule.class})
+
 public interface AppComponent {
-    void injectsToMainActivity(MainActivity mainActivity);
+    void inject(Presenter presenter);
 
     Retrofit getRetrofit();
+
     NetworkComponent getNetworkComponent();
-    SugarComponent sugarComponent();
-    RoomComponent roomComponent();
+
+    SugarComponent getSugarComponent();
+
+    RoomComponent getRoomComponent();
+
+    Statistics getStatistics();
 }

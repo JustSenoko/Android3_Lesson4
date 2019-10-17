@@ -5,7 +5,7 @@ import java.util.Date;
 import java.util.List;
 
 import geekbrains.ru.github.OrmApp;
-import geekbrains.ru.github.databases.Statistics;
+import geekbrains.ru.github.databases.statistics.StatisticsRecord;
 import geekbrains.ru.github.retrofit.RetrofitModel;
 import io.reactivex.Single;
 import io.reactivex.SingleOnSubscribe;
@@ -15,8 +15,8 @@ import io.reactivex.schedulers.Schedulers;
 public class RoomHelper {
     public RoomHelper(){}
 
-    public Single<Statistics> saveAll(List<RetrofitModel> modelList){
-        return Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+    public Single<StatisticsRecord> saveAll(List<RetrofitModel> modelList){
+        return Single.create((SingleOnSubscribe<StatisticsRecord>) emitter -> {
             String curLogin;
             String curUserID;
             String curAvatarUrl;
@@ -35,17 +35,17 @@ public class RoomHelper {
             OrmApp.get().getDB().productDao().insertAll(roomModelList);
             Date second = new Date();
             List<RoomModel> tempList = OrmApp.get().getDB().productDao().getAll();
-            emitter.onSuccess(new Statistics(first, second, tempList.size()));
+            emitter.onSuccess(new StatisticsRecord(first, second, tempList.size()));
         }).subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public Single<Statistics> selectAll(){
-        return Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+    public Single<StatisticsRecord> selectAll(){
+        return Single.create((SingleOnSubscribe<StatisticsRecord>) emitter -> {
             try {
                 Date first = new Date();
                 List<RoomModel> products = OrmApp.get().getDB().productDao().getAll();
-                emitter.onSuccess(new Statistics(first, new Date(), products.size()));
+                emitter.onSuccess(new StatisticsRecord(first, new Date(), products.size()));
             } catch (Exception e) {
                 emitter.onError(e);
             }
@@ -53,14 +53,14 @@ public class RoomHelper {
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public Single<Statistics> deleteAll(){
-        return Single.create((SingleOnSubscribe<Statistics>) emitter -> {
+    public Single<StatisticsRecord> deleteAll(){
+        return Single.create((SingleOnSubscribe<StatisticsRecord>) emitter -> {
             try {
                 List<RoomModel> products = OrmApp.get().getDB().productDao().getAll();
                 Date first = new Date();
                 OrmApp.get().getDB().productDao().deleteAll();
 
-                emitter.onSuccess(new Statistics(first, new Date(), products.size()));
+                emitter.onSuccess(new StatisticsRecord(first, new Date(), products.size()));
             } catch (Exception e) {
                 emitter.onError(e);
             }
