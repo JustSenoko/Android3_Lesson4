@@ -28,9 +28,14 @@ public class DaggerNetModule {
     }
 
     @Provides
-    Retrofit makeRetrofit(){
+    public String provideEndpoint() {
+        return "https://api.github.com/";
+    }
+
+    @Provides
+    Retrofit makeRetrofit(String provider){
         return new Retrofit.Builder()
-                .baseUrl("https://api.github.com/")
+                .baseUrl(provider)
                 .addConverterFactory(GsonConverterFactory.create())
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .build();
