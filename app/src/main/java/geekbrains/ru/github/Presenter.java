@@ -24,10 +24,10 @@ import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.subjects.PublishSubject;
 
 public class Presenter {
-    private PublishSubject<String> showUserInfo;
-    private PublishSubject<String> showUserReposInfo;
-    private PublishSubject<String> showRoomInfo;
-    private PublishSubject<String> showSugarInfo;
+    private PublishSubject<String> showUserInfo = PublishSubject.create();
+    private PublishSubject<String> showUserReposInfo = PublishSubject.create();
+    private PublishSubject<String> showRoomInfo = PublishSubject.create();
+    private PublishSubject<String> showSugarInfo = PublishSubject.create();
 
     private List<RetrofitModel> modelList = new ArrayList<>();
 
