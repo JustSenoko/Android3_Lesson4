@@ -21,12 +21,13 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.observers.DisposableObserver;
 import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.subjects.PublishSubject;
 
 public class Presenter {
-    private DisposableObserver<String> showUserInfo;
-    private DisposableObserver<String> showUserReposInfo;
-    private DisposableObserver<String> showRoomInfo;
-    private DisposableObserver<String> showSugarInfo;
+    private PublishSubject<String> showUserInfo;
+    private PublishSubject<String> showUserReposInfo;
+    private PublishSubject<String> showRoomInfo;
+    private PublishSubject<String> showSugarInfo;
 
     private List<RetrofitModel> modelList = new ArrayList<>();
 
@@ -47,20 +48,20 @@ public class Presenter {
                   DisposableObserver<String> showUserReposInfo,
                   DisposableObserver<String> showRoomInfo,
                   DisposableObserver<String> showSugarInfo) {
-        this.showRoomInfo = showRoomInfo;
-        this.showSugarInfo = showSugarInfo;
-        this.showUserInfo = showInfo;
-        this.showUserReposInfo = showUserReposInfo;
+        this.showRoomInfo.subscribe(showRoomInfo);
+        this.showSugarInfo.subscribe(showSugarInfo);
+        this.showUserInfo.subscribe(showInfo);
+        this.showUserReposInfo.subscribe(showUserReposInfo);
 
         this.roomHelper = OrmApp.getRoomComponent().getRoomHelper();
         this.sugarHelper = OrmApp.getSugarComponent().getSugarHelper();
     }
 
     void unbindView() {
-        showUserInfo.dispose();
-        showUserReposInfo.dispose();
-        showSugarInfo.dispose();
-        showRoomInfo.dispose();
+        showUserInfo.onComplete();
+        showUserReposInfo.onComplete();
+        showSugarInfo.onComplete();
+        showRoomInfo.onComplete();
     }
 
     boolean checkInternet() {
@@ -114,7 +115,7 @@ public class Presenter {
     }
 
     private DisposableSingleObserver<StatisticsRecord> createObserver(String dbName) {
-        DisposableObserver<String> show;
+        PublishSubject<String> show;
 
         if (dbName.equals("sugar")) {
             show = showSugarInfo;
