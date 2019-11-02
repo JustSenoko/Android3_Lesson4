@@ -55,11 +55,12 @@ public class DaggerNetModule {
     }
 
     @Provides
-    public NetworkInfo getNetworkInfo(){
+    Boolean checkConnection() {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         if(connectivityManager == null) return null;
-        return connectivityManager.getActiveNetworkInfo();
+        NetworkInfo info = connectivityManager.getActiveNetworkInfo();
+        return info != null && info.isConnected();
     }
 
     @Provides

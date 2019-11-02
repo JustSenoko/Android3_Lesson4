@@ -3,7 +3,6 @@ package geekbrains.ru.github;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -12,6 +11,7 @@ import com.orm.SugarContext;
 import javax.inject.Inject;
 
 import io.reactivex.observers.DisposableObserver;
+import io.reactivex.observers.DisposableSingleObserver;
 
 public class MainActivity extends AppCompatActivity {
     private TextView mInfoTextView;
@@ -19,6 +19,9 @@ public class MainActivity extends AppCompatActivity {
     private TextView mRoomTextView;
     private TextView mReposTextView;
     private EditText editText;
+
+    private DisposableSingleObserver<String> showSugar;
+    private DisposableSingleObserver<String> showRoom;
 
     @Inject
     Presenter presenter;
@@ -41,12 +44,12 @@ public class MainActivity extends AppCompatActivity {
         mReposTextView = findViewById(R.id.tvRepos);
 
         findViewById(R.id.btnLoad).setOnClickListener((v) -> loadUserInfo());
-        findViewById(R.id.btnSaveAllSugar).setOnClickListener(view -> presenter.saveAllSugar());
-        findViewById(R.id.btnSelectAllSugar).setOnClickListener(view -> presenter.selectAllSugar());
-        findViewById(R.id.btnDeleteAllSugar).setOnClickListener(view -> presenter.deleteAllSugar());
-        findViewById(R.id.btnSaveAllRoom).setOnClickListener(view -> presenter.saveAllRoom());
-        findViewById(R.id.btnSelectAllRoom).setOnClickListener(view -> presenter.selectAllRoom());
-        findViewById(R.id.btnDeleteAllRoom).setOnClickListener(view -> presenter.deleteAllRoom());
+        findViewById(R.id.btnSaveAllSugar).setOnClickListener(view -> presenter.saveAllSugar(makeObserver(showSugar, mSugarTextView)));
+        findViewById(R.id.btnSelectAllSugar).setOnClickListener(view -> presenter.selectAllSugar(makeObserver(showSugar, mSugarTextView)));
+        findViewById(R.id.btnDeleteAllSugar).setOnClickListener(view -> presenter.deleteAllSugar(makeObserver(showSugar, mSugarTextView)));
+        findViewById(R.id.btnSaveAllRoom).setOnClickListener(view -> presenter.saveAllRoom(makeObserver(showRoom, mRoomTextView)));
+        findViewById(R.id.btnSelectAllRoom).setOnClickListener(view -> presenter.selectAllRoom(makeObserver(showRoom, mRoomTextView)));
+        findViewById(R.id.btnDeleteAllRoom).setOnClickListener(view -> presenter.deleteAllRoom(makeObserver(showRoom, mRoomTextView)));
     }
 
     @Override
@@ -60,6 +63,24 @@ public class MainActivity extends AppCompatActivity {
         DisposableObserver<String> showSugar = createObserver(mSugarTextView);
 
         presenter.bindView(showInfo, showReposInfo, showRoom, showSugar);
+    }
+
+    DisposableSingleObserver<String> makeObserver(DisposableSingleObserver<String> showSugar, TextView sugarTextView){
+        if(showSugar != null && !showSugar.isDisposed()) showSugar.dispose();
+
+        showSugar = new DisposableSingleObserver<String>() {
+            @Override
+            public void onSuccess(String s) {
+                sugarTextView.setText(s);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                sugarTextView.setText(e.getLocalizedMessage());
+            }
+        };
+        this.showSugar = showSugar;
+        return showSugar;
     }
 
     private DisposableObserver<String> createObserver(TextView textView) {
@@ -93,10 +114,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadUserInfo() {
-        if (!presenter.checkInternet()) {
-            Toast.makeText(this, "Подключите интернет", Toast.LENGTH_SHORT).show();
-            return;
-        }
         presenter.loadUserInfo(editText.getText().toString());
     }
 }

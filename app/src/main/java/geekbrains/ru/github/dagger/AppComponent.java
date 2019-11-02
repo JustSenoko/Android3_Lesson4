@@ -22,4 +22,6 @@ public interface AppComponent {
     RoomComponent getRoomComponent();
 
     Statistics getStatistics();
+
+    DBTestComponent getDBTestComponent(DBTestModule module);
 }
