@@ -63,6 +63,11 @@ public class DaggerNetModule {
     }
 
     @Provides
+    Boolean checkConnection(NetworkInfo info) {
+        return info != null && info.isConnected();
+    }
+
+    @Provides
     public RetrofitHelper getRetrofitHelper(RestApi api) {
         return new RetrofitHelper(api);
     }

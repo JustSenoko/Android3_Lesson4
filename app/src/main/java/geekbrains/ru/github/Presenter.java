@@ -1,7 +1,5 @@
 package geekbrains.ru.github;
 
-import android.net.NetworkInfo;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,8 +65,7 @@ public class Presenter {
 
     boolean checkInternet() {
         NetworkComponent networkComponent = OrmApp.getNetworkComponent();
-        NetworkInfo networkInfo = networkComponent.getNetwork();
-        return networkInfo != null || networkInfo.isConnected();
+        return networkComponent.checkConnection();
     }
 
     void loadUserInfo(String userName) {
