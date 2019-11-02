@@ -30,12 +30,6 @@ public class Presenter {
 
     private List<RetrofitModel> modelList = new ArrayList<>();
 
-//    @Inject
-//    Statistics statistics;
-//    @Inject
-//    RoomHelper roomHelper;
-//    @Inject
-//    SugarHelper sugarHelper;
     @Inject
     RetrofitHelper retrofitHelper;
 
@@ -51,9 +45,6 @@ public class Presenter {
         this.showSugarInfo.subscribe(showSugarInfo);
         this.showUserInfo.subscribe(showInfo);
         this.showUserReposInfo.subscribe(showUserReposInfo);
-
-//        this.roomHelper = OrmApp.getRoomComponent().getRoomHelper();
-//        this.sugarHelper = OrmApp.getSugarComponent().getSugarHelper();
     }
 
     void unbindView() {
@@ -63,12 +54,18 @@ public class Presenter {
         showRoomInfo.onComplete();
     }
 
-    boolean checkInternet() {
+    private boolean checkInternet() {
         NetworkComponent networkComponent = OrmApp.getNetworkComponent();
         return networkComponent.checkConnection();
     }
 
     void loadUserInfo(String userName) {
+        if (!checkInternet()) {
+            showUserInfo.onNext("");
+            showUserReposInfo.onNext("");
+            return;
+        }
+
         retrofitHelper.getUserInfo(userName)
                 .subscribe(new SingleObserver<RetrofitModel>() {
                     @Override

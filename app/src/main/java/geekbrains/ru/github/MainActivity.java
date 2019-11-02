@@ -3,7 +3,6 @@ package geekbrains.ru.github;
 import android.os.Bundle;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -115,10 +114,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadUserInfo() {
-        if (!presenter.checkInternet()) {
-            Toast.makeText(this, "Подключите интернет", Toast.LENGTH_SHORT).show();
-            return;
-        }
         presenter.loadUserInfo(editText.getText().toString());
     }
 }
