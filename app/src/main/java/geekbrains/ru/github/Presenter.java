@@ -8,6 +8,8 @@ import java.util.List;
 import javax.inject.Inject;
 
 import geekbrains.ru.github.dagger.AppComponent;
+import geekbrains.ru.github.dagger.DBTestComponent;
+import geekbrains.ru.github.dagger.DBTestModule;
 import geekbrains.ru.github.dagger.NetworkComponent;
 import geekbrains.ru.github.databases.room.RoomHelper;
 import geekbrains.ru.github.databases.statistics.Statistics;
@@ -28,6 +30,8 @@ public class Presenter {
     private PublishSubject<String> showUserReposInfo = PublishSubject.create();
     private PublishSubject<String> showRoomInfo = PublishSubject.create();
     private PublishSubject<String> showSugarInfo = PublishSubject.create();
+
+    private DBTestComponent testComponent;
 
     private List<RetrofitModel> modelList = new ArrayList<>();
 
@@ -82,6 +86,7 @@ public class Presenter {
                     public void onSuccess(RetrofitModel value) {
                         showUserInfo.onNext(value.getAvatarUrl());
                         modelList.add(value);
+                        testComponent = OrmApp.getDbTestComponent(new DBTestModule(modelList));
                     }
 
                     @Override

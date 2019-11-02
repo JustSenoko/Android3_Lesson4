@@ -4,7 +4,11 @@ import android.app.Application;
 
 import androidx.room.Room;
 
+import java.util.List;
+
 import geekbrains.ru.github.dagger.AppComponent;
+import geekbrains.ru.github.dagger.DBTestComponent;
+import geekbrains.ru.github.dagger.DBTestModule;
 import geekbrains.ru.github.dagger.DaggerAppComponent;
 import geekbrains.ru.github.dagger.DaggerNetModule;
 import geekbrains.ru.github.dagger.DaggerPresenterComponent;
@@ -13,6 +17,7 @@ import geekbrains.ru.github.dagger.PresenterComponent;
 import geekbrains.ru.github.dagger.RoomComponent;
 import geekbrains.ru.github.dagger.SugarComponent;
 import geekbrains.ru.github.databases.room.GithubRoomDatabase;
+import geekbrains.ru.github.retrofit.RetrofitModel;
 
 public class OrmApp extends Application {
 
@@ -57,5 +62,9 @@ public class OrmApp extends Application {
 
     public static PresenterComponent getPresenterComponent() {
         return presenterComponent;
+    }
+
+    public static DBTestComponent getDbTestComponent(DBTestModule module) {
+        return component.getDBTestComponent(module);
     }
 }
